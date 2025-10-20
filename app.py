@@ -16,7 +16,7 @@ df_trend = df.sort_values("date", ascending=True).reset_index(drop=True)
 
 # Latest row for KPIs
 latest = df_desc.iloc[0]
-latest_date = latest["date"].strftime("%B %Y")  # e.g., "August 2025"
+latest_date = latest["date"].strftime("%B %Y")  # e.g., "August 2025")
 
 # =======================
 # HEADER
@@ -52,6 +52,35 @@ s1.caption(f"As of {latest_date}")
 
 s2.metric("➖ Spread: Houston − U.S. ($/gal)", f"${spread_us:+.3f}")
 s2.caption(f"As of {latest_date}")
+
+st.markdown("---")
+
+# =======================
+# KPI ROW 3: MoM % and YoY % (latest usable)
+# =======================
+# Compute MoM and YoY using shift (like LAG in SQL)
+chg = df_trend.copy()
+chg["prev_m"] = chg["gasoline_price"].shift(1)
+chg["prev_y"] = chg["gasoline_price"].shift(12)
+
+# Divide-by-zero protection using NA (matches NULLIF behavior)
+chg["mom_pct"] = (chg["gasoline_price"] - chg["prev_m"]) / chg["prev_m"].replace(0, pd.NA)
+chg["yoy_pct"] = (chg["gasoline_price"] - chg["prev_y"]) / chg["prev_y"].replace(0, pd.NA)
+
+# Take the latest non-null rows for each metric
+mom_row = chg.dropna(subset=["mom_pct"]).iloc[-1]
+yoy_row = chg.dropna(subset=["yoy_pct"]).iloc[-1]
+
+mom_date = pd.to_datetime(mom_row["date"]).strftime("%B %Y")
+yoy_date = pd.to_datetime(yoy_row["date"]).strftime("%B %Y")
+
+k1, k2 = st.columns(2)
+
+k1.metric("📈 MoM % (Houston)", f"{mom_row['mom_pct']*100:+.1f}%")
+k1.caption(f"As of {mom_date}")
+
+k2.metric("📈 YoY % (Houston)", f"{yoy_row['yoy_pct']*100:+.1f}%")
+k2.caption(f"As of {yoy_date}")
 
 st.markdown("---")
 
