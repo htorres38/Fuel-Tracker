@@ -58,7 +58,7 @@ st.markdown("---")
 # =======================
 # KPI ROW 3: MoM % and YoY % (latest usable)
 # =======================
-# Compute MoM and YoY using shift (like LAG in SQL)
+# Compute MoM and YoY using shift (like SQL LAG)
 chg = df_trend.copy()
 chg["prev_m"] = chg["gasoline_price"].shift(1)
 chg["prev_y"] = chg["gasoline_price"].shift(12)
@@ -75,7 +75,6 @@ mom_date = pd.to_datetime(mom_row["date"]).strftime("%B %Y")
 yoy_date = pd.to_datetime(yoy_row["date"]).strftime("%B %Y")
 
 k1, k2 = st.columns(2)
-
 k1.metric("📈 MoM % (Houston)", f"{mom_row['mom_pct']*100:+.1f}%")
 k1.caption(f"As of {mom_date}")
 
@@ -236,3 +235,36 @@ year_bar = (
     .properties(height=360)
 )
 st.altair_chart(year_bar, use_container_width=True)
+
+st.markdown("---")
+
+# =======================
+# FINAL LINE CHART: Houston Gasoline Price Change — MoM & YoY
+# =======================
+st.subheader("Houston Gasoline Price Change — MoM & YoY")
+st.caption("Percent change; MoM needs prior month, YoY needs same month last year.")
+
+# Use the already computed 'chg' dataframe (has mom_pct & yoy_pct)
+mom_yoy_long = (
+    chg[["date", "mom_pct", "yoy_pct"]]
+    .melt(id_vars=["date"], var_name="metric", value_name="pct")
+    .dropna(subset=["pct"])
+    .replace({"metric": {"mom_pct": "MoM %", "yoy_pct": "YoY %"}})
+)
+
+mom_yoy_chart = (
+    alt.Chart(mom_yoy_long)
+    .mark_line()
+    .encode(
+        x=alt.X("date:T", title="Monthly Date", axis=alt.Axis(format="%Y-%m", labelAngle=-30)),
+        y=alt.Y("pct:Q", title="Percent Change", axis=alt.Axis(format="%")),
+        color=alt.Color("metric:N", title="Metric"),
+        tooltip=[
+            alt.Tooltip("date:T", title="Date", format="%Y-%m"),
+            alt.Tooltip("metric:N", title="Metric"),
+            alt.Tooltip("pct:Q", title="Change", format=".1%")
+        ],
+    )
+    .properties(height=360)
+)
+st.altair_chart(mom_yoy_chart, use_container_width=True)
