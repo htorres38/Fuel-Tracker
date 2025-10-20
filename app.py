@@ -16,7 +16,7 @@ df_trend = df.sort_values("date", ascending=True).reset_index(drop=True)
 
 # Latest row for KPIs
 latest = df_desc.iloc[0]
-latest_date = latest["date"].strftime("%B %Y")  # e.g., "August 2025")
+latest_date = latest["date"].strftime("%B %Y")  # e.g., "August 2025"
 
 # =======================
 # HEADER
@@ -24,19 +24,90 @@ latest_date = latest["date"].strftime("%B %Y")  # e.g., "August 2025")
 st.title("⛽ Fuel Price Dashboard — Houston vs Texas & U.S. (2020–2025)")
 st.caption("Monthly regular gasoline prices ($/gal). Benchmarks: Texas statewide & U.S. national averages.")
 
+# --------------------------------------------------------------------
+# Helpers for analytical captions
+# --------------------------------------------------------------------
+def pct_change(new, old):
+    if old is None or pd.isna(old) or old == 0:
+        return None
+    return (new - old) / old
+
+def posneg_phrase(diff, higher_word="above", lower_word="below"):
+    if pd.isna(diff):
+        return "—"
+    if diff > 0:
+        return f"{diff:.3f} {higher_word}"
+    elif diff < 0:
+        return f"{abs(diff):.3f} {lower_word}"
+    else:
+        return "equal to"
+
+# Grab latest values
+hou_now = float(latest["gasoline_price"])
+tx_now  = float(latest["texas_avg"])
+us_now  = float(latest["national_avg"])
+
+# Prior month & prior year rows (aligned because df_desc is sorted by date)
+prev_m = df_desc.iloc[1]  if len(df_desc) > 1  else None
+prev_y = df_desc.iloc[12] if len(df_desc) > 12 else None
+
+hou_prev_m = float(prev_m["gasoline_price"]) if prev_m is not None else None
+tx_prev_m  = float(prev_m["texas_avg"])      if prev_m is not None else None
+us_prev_m  = float(prev_m["national_avg"])   if prev_m is not None else None
+
+hou_prev_y = float(prev_y["gasoline_price"]) if prev_y is not None else None
+tx_prev_y  = float(prev_y["texas_avg"])      if prev_y is not None else None
+us_prev_y  = float(prev_y["national_avg"])   if prev_y is not None else None
+
+# MoM & YoY per series
+hou_mom = pct_change(hou_now, hou_prev_m)
+tx_mom  = pct_change(tx_now,  tx_prev_m)
+us_mom  = pct_change(us_now,  us_prev_m)
+
+hou_yoy = pct_change(hou_now, hou_prev_y)
+tx_yoy  = pct_change(tx_now,  tx_prev_y)
+us_yoy  = pct_change(us_now,  us_prev_y)
+
+# Spreads vs Houston (positive means benchmark above Houston)
+tx_minus_hou = tx_now - hou_now
+us_minus_hou = us_now - hou_now
+
+# Spreads from Houston's point of view (positive = Houston above benchmark)
+spread_tx_now = hou_now - tx_now
+spread_us_now = hou_now - us_now
+
 # =======================
-# KPI ROW 1: Latest Prices
+# KPI ROW 1: Latest Prices (with analytical captions)
 # =======================
 c1, c2, c3 = st.columns(3)
 
-c1.metric("📍 Latest Houston Price ($/gal)", f"${latest['gasoline_price']:.3f}")
-c1.caption(f"As of {latest_date}")
+# Houston KPI + analysis caption
+c1.metric("Latest Houston Price ($/gal)", f"${hou_now:.3f}")
+c1.caption(
+    f"As of {latest_date} · "
+    f"{('+' if hou_mom and hou_mom>=0 else '') + format(hou_mom*100, '.1f') + '%' if hou_mom is not None else 'MoM —'} , "
+    f"{('+' if hou_yoy and hou_yoy>=0 else '') + format(hou_yoy*100, '.1f') + '%' if hou_yoy is not None else 'YoY —'} · "
+    f"{posneg_phrase(spread_tx_now, higher_word='above TX', lower_word='below TX')} · "
+    f"{posneg_phrase(spread_us_now, higher_word='above U.S.', lower_word='below U.S.')}"
+)
 
-c2.metric("📊 Latest Texas Avg ($/gal)", f"${latest['texas_avg']:.3f}")
-c2.caption(f"As of {latest_date}")
+# Texas KPI + analysis caption (relative to Houston + own MoM/YoY)
+c2.metric("Latest Texas Price ($/gal)", f"${tx_now:.3f}")
+c2.caption(
+    f"As of {latest_date} · "
+    f"{posneg_phrase(tx_minus_hou, higher_word='above Houston', lower_word='below Houston')} · "
+    f"{('+' if tx_mom and tx_mom>=0 else '') + format(tx_mom*100, '.1f') + '%' if tx_mom is not None else 'MoM —'} , "
+    f"{('+' if tx_yoy and tx_yoy>=0 else '') + format(tx_yoy*100, '.1f') + '%' if tx_yoy is not None else 'YoY —'}"
+)
 
-c3.metric("🇺🇸 Latest U.S. Avg ($/gal)", f"${latest['national_avg']:.3f}")
-c3.caption(f"As of {latest_date}")
+# U.S. KPI + analysis caption (relative to Houston + own MoM/YoY)
+c3.metric("Latest U.S. National Price ($/gal)", f"${us_now:.3f}")
+c3.caption(
+    f"As of {latest_date} · "
+    f"{posneg_phrase(us_minus_hou, higher_word='above Houston', lower_word='below Houston')} · "
+    f"{('+' if us_mom and us_mom>=0 else '') + format(us_mom*100, '.1f') + '%' if us_mom is not None else 'MoM —'} , "
+    f"{('+' if us_yoy and us_yoy>=0 else '') + format(us_yoy*100, '.1f') + '%' if us_yoy is not None else 'YoY —'}"
+)
 
 st.markdown("---")
 
