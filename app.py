@@ -35,7 +35,6 @@ spread_tx = latest["gasoline_price"] - latest["texas_avg"]
 spread_us = latest["gasoline_price"] - latest["national_avg"]
 
 s1, s2 = st.columns(2)
-
 s1.metric("➖ Spread: Houston − Texas ($/gal)", f"${spread_tx:+.3f}")
 s1.caption(f"As of {latest_date}")
 
@@ -50,17 +49,15 @@ st.markdown("---")
 st.subheader("Monthly Gasoline Price Trends (2020 - 2025)")
 
 # Prepare long (UNION ALL equivalent)
+df_trend = df.sort_values("date", ascending=True).copy()
 df_long = (
-    df.sort_values("date", ascending=True)
-      .melt(
-          id_vars=["date"],
-          value_vars=["gasoline_price", "texas_avg", "national_avg"],
-          var_name="series",
-          value_name="price"
-      )
+    df_trend.melt(
+        id_vars=["date"],
+        value_vars=["gasoline_price", "texas_avg", "national_avg"],
+        var_name="series",
+        value_name="price"
+    )
 )
-
-# Map series names to match your SQL labels
 name_map = {
     "gasoline_price": "Houston",
     "texas_avg": "Texas Statewide",
@@ -68,14 +65,11 @@ name_map = {
 }
 df_long["series"] = df_long["series"].map(name_map)
 
-# Build the Altair line chart
 trend_chart = (
     alt.Chart(df_long)
     .mark_line()
     .encode(
-        x=alt.X("date:T",
-                title="Monthly Date",
-                axis=alt.Axis(format="%Y-%m", labelAngle=-30)),  # shows 2020-01 style
+        x=alt.X("date:T", title="Monthly Date", axis=alt.Axis(format="%Y-%m", labelAngle=-30)),
         y=alt.Y("price:Q", title="Gasoline Price (USD per Gallon)"),
         color=alt.Color("series:N", title="Series"),
         tooltip=[
@@ -86,5 +80,41 @@ trend_chart = (
     )
     .properties(height=380)
 )
-
 st.altair_chart(trend_chart, use_container_width=True)
+
+st.markdown("---")
+
+# =======================
+# NEW LINE CHART: Houston Price Spreads vs Texas & U.S.
+# =======================
+st.subheader("Houston Price Spreads vs Texas & U.S.")
+
+# Compute spreads over time
+df_spread = df_trend.copy()
+df_spread["Houston - Texas"] = df_spread["gasoline_price"] - df_spread["texas_avg"]
+df_spread["Houston - U.S."] = df_spread["gasoline_price"] - df_spread["national_avg"]
+
+# Long form for two-line chart
+spread_long = df_spread.melt(
+    id_vars=["date"],
+    value_vars=["Houston - Texas", "Houston - U.S."],
+    var_name="spread",
+    value_name="value"
+).dropna(subset=["value"])
+
+spread_chart = (
+    alt.Chart(spread_long)
+    .mark_line()
+    .encode(
+        x=alt.X("date:T", title="Monthly Date", axis=alt.Axis(format="%Y-%m", labelAngle=-30)),
+        y=alt.Y("value:Q", title="Spread ($/gal)"),
+        color=alt.Color("spread:N", title=""),
+        tooltip=[
+            alt.Tooltip("date:T", title="Date", format="%Y-%m"),
+            alt.Tooltip("spread:N", title="Spread"),
+            alt.Tooltip("value:Q", title="Value ($/gal)", format="+.3f"),
+        ],
+    )
+    .properties(height=320)
+)
+st.altair_chart(spread_chart, use_container_width=True)
