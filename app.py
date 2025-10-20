@@ -19,11 +19,14 @@ latest = df_desc.iloc[0]
 latest_date = latest["date"].strftime("%B %Y")  # e.g., "August 2025"
 
 # =======================
-# KPI ROW 1: Latest Prices
+# HEADER
 # =======================
 st.title("⛽ Fuel Price Dashboard — Houston vs Texas & U.S. (2020–2025)")
 st.caption("Monthly regular gasoline prices ($/gal). Benchmarks: Texas statewide & U.S. national averages.")
 
+# =======================
+# KPI ROW 1: Latest Prices
+# =======================
 c1, c2, c3 = st.columns(3)
 
 c1.metric("📍 Latest Houston Price ($/gal)", f"${latest['gasoline_price']:.3f}")
@@ -161,3 +164,46 @@ heatmap = (
     .properties(height=340)
 )
 st.altair_chart(heatmap, use_container_width=True)
+
+st.markdown("---")
+
+# =======================
+# BAR CHART: Yearly Average Prices (Houston vs Benchmarks)
+# =======================
+st.subheader("Yearly Average Prices (Houston vs Benchmarks)")
+
+# Compute yearly averages (SQL yrs CTE equivalent)
+yearly = (
+    df_trend.assign(year=df_trend["date"].dt.year)
+    .groupby("year", as_index=False)[["gasoline_price", "texas_avg", "national_avg"]]
+    .mean()
+    .rename(columns={
+        "gasoline_price": "Houston",
+        "texas_avg": "Texas Statewide",
+        "national_avg": "U.S. National"
+    })
+)
+
+# Long format for clustered bars
+yearly_long = yearly.melt(
+    id_vars=["year"],
+    var_name="series",
+    value_name="avg_price"
+)
+
+year_bar = (
+    alt.Chart(yearly_long)
+    .mark_bar()
+    .encode(
+        x=alt.X("year:O", title="Year"),
+        y=alt.Y("avg_price:Q", title="Average Price ($/gal)"),
+        color=alt.Color("series:N", title="Series"),
+        tooltip=[
+            alt.Tooltip("year:O", title="Year"),
+            alt.Tooltip("series:N", title="Series"),
+            alt.Tooltip("avg_price:Q", title="Avg Price ($/gal)", format=".3f"),
+        ],
+    )
+    .properties(height=360)
+)
+st.altair_chart(year_bar, use_container_width=True)
