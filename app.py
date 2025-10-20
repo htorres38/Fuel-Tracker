@@ -16,26 +16,26 @@ df_trend = df.sort_values("date", ascending=True).reset_index(drop=True)
 
 # Latest row for KPIs
 latest = df_desc.iloc[0]
-latest_date = latest["date"].strftime("%B %Y")  # e.g., "August 2025")
+latest_date = latest["date"].strftime("%B %Y")  # e.g., "August 2025"
 
 # =======================
 # HEADER
 # =======================
-st.title("⛽ Fuel Price Dashboard — Houston vs Texas & U.S. (2020–2025)")
-st.caption("Monthly regular gasoline prices ($/gal). Benchmarks: Texas statewide & U.S. national averages.")
+st.title("Houston Gasoline Prices vs Texas & U.S. (2020–2025)")
+st.caption("Monthly regular gasoline prices ($/gal), with benchmarks and change metrics.")
 
 # =======================
-# KPI ROW 1: Latest Prices
+# KPI ROW 1: Latest Prices  (match screenshot)
 # =======================
 c1, c2, c3 = st.columns(3)
 
-c1.metric("📍 Latest Houston Price ($/gal)", f"${latest['gasoline_price']:.3f}")
+c1.metric("Latest Houston Price ($/gal)", f"${latest['gasoline_price']:.3f}")
 c1.caption(f"As of {latest_date}")
 
-c2.metric("📊 Latest Texas Avg ($/gal)", f"${latest['texas_avg']:.3f}")
+c2.metric("Latest Texas Price ($/gal)", f"${latest['texas_avg']:.3f}")
 c2.caption(f"As of {latest_date}")
 
-c3.metric("🇺🇸 Latest U.S. Avg ($/gal)", f"${latest['national_avg']:.3f}")
+c3.metric("Latest U.S. National Price ($/gal)", f"${latest['national_avg']:.3f}")
 c3.caption(f"As of {latest_date}")
 
 st.markdown("---")
@@ -47,10 +47,10 @@ spread_tx = latest["gasoline_price"] - latest["texas_avg"]
 spread_us = latest["gasoline_price"] - latest["national_avg"]
 
 s1, s2 = st.columns(2)
-s1.metric("➖ Spread: Houston − Texas ($/gal)", f"${spread_tx:+.3f}")
+s1.metric("Spread: Houston − Texas ($/gal)", f"${spread_tx:+.3f}")
 s1.caption(f"As of {latest_date}")
 
-s2.metric("➖ Spread: Houston − U.S. ($/gal)", f"${spread_us:+.3f}")
+s2.metric("Spread: Houston − U.S. ($/gal)", f"${spread_us:+.3f}")
 s2.caption(f"As of {latest_date}")
 
 st.markdown("---")
@@ -75,10 +75,10 @@ mom_date = pd.to_datetime(mom_row["date"]).strftime("%B %Y")
 yoy_date = pd.to_datetime(yoy_row["date"]).strftime("%B %Y")
 
 k1, k2 = st.columns(2)
-k1.metric("📈 MoM % (Houston)", f"{mom_row['mom_pct']*100:+.1f}%")
+k1.metric("MoM % (Houston)", f"{mom_row['mom_pct']*100:+.1f}%")
 k1.caption(f"As of {mom_date}")
 
-k2.metric("📈 YoY % (Houston)", f"{yoy_row['yoy_pct']*100:+.1f}%")
+k2.metric("YoY % (Houston)", f"{yoy_row['yoy_pct']*100:+.1f}%")
 k2.caption(f"As of {yoy_date}")
 
 st.markdown("---")
@@ -86,7 +86,7 @@ st.markdown("---")
 # =======================
 # LINE CHART: Monthly Trends (2020–2025)
 # =======================
-st.subheader("Monthly Gasoline Price Trends (2020 - 2025)")
+st.subheader("Monthly Gasoline Price Trends (2020–2025)")
 
 # Long form (UNION ALL equivalent)
 df_long = df_trend.melt(
@@ -242,7 +242,7 @@ st.markdown("---")
 # FINAL LINE CHART: Houston Gasoline Price Change — MoM & YoY
 # =======================
 st.subheader("Houston Gasoline Price Change — MoM & YoY")
-st.caption("Percent change; MoM needs prior month, YoY needs same month last year.")
+st.caption("Percent change; MoM uses prior month, YoY uses the same month last year.")
 
 # Use the already computed 'chg' dataframe (has mom_pct & yoy_pct)
 mom_yoy_long = (
