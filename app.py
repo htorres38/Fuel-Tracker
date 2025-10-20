@@ -128,14 +128,14 @@ df_long["series"] = df_long["series"].map(name_map)
 
 trend_chart = (
     alt.Chart(df_long)
-    .mark_line()
+    .mark_line(point=True)  # add markers
     .encode(
         x=alt.X("date:T", title="Monthly Date", axis=alt.Axis(format="%Y-%m", labelAngle=-30)),
         y=alt.Y("price:Q", title="Gasoline Price (USD per Gallon)"),
-        color=alt.Color("series:N", title="Series"),
+        color=alt.Color("series:N", title=None),  # remove legend title
         tooltip=[
             alt.Tooltip("date:T", title="Date", format="%Y-%m"),
-            alt.Tooltip("series:N", title="Series"),
+            alt.Tooltip("series:N", title=""),
             alt.Tooltip("price:Q", title="Price ($/gal)", format=".3f"),
         ],
     )
@@ -169,7 +169,7 @@ st.subheader("Houston Price Spreads vs Texas & U.S.")
 
 df_spread = df_trend.copy()
 df_spread["Houston - Texas"] = df_spread["gasoline_price"] - df_spread["texas_avg"]
-df_spread["Houston - U.S."] = df_spread["gasoline_price"] - df_trend["national_avg"]
+df_spread["Houston - U.S."] = df_trend["gasoline_price"] - df_trend["national_avg"]
 
 spread_long = df_spread.melt(
     id_vars=["date"],
@@ -180,14 +180,14 @@ spread_long = df_spread.melt(
 
 spread_chart = (
     alt.Chart(spread_long)
-    .mark_line()
+    .mark_line(point=True)  # add markers
     .encode(
         x=alt.X("date:T", title="Monthly Date", axis=alt.Axis(format="%Y-%m", labelAngle=-30)),
         y=alt.Y("value:Q", title="Spread ($/gal)"),
-        color=alt.Color("spread:N", title=""),
+        color=alt.Color("spread:N", title=""),  # keep legend but no title
         tooltip=[
             alt.Tooltip("date:T", title="Date", format="%Y-%m"),
-            alt.Tooltip("spread:N", title="Spread"),
+            alt.Tooltip("spread:N", title=""),
             alt.Tooltip("value:Q", title="Value ($/gal)", format="+.3f"),
         ],
     )
@@ -196,7 +196,6 @@ spread_chart = (
 st.altair_chart(spread_chart, use_container_width=True)
 
 # ---- Spread narrative ----
-# Last 3-month slope to indicate narrowing/widening
 def slope_last_n(series, n=3):
     s = series.dropna().tail(n)
     if len(s) < 2:
@@ -239,29 +238,31 @@ month_order = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov"
 season["month_lbl"] = pd.Categorical(season["month_lbl"], categories=month_order, ordered=True)
 season = season.sort_values(["year", "month_num"])
 
-heatmap = (
-    alt.Chart(season)
-    .mark_rect()
-    .encode(
-        x=alt.X("month_lbl:N", title="Month", sort=month_order),
-        y=alt.Y("year:O", title="Year"),
-        color=alt.Color("avg_price:Q", title="Avg Price ($/gal)"),
-        tooltip=[
-            alt.Tooltip("year:O", title="Year"),
-            alt.Tooltip("month_lbl:N", title="Month"),
-            alt.Tooltip("avg_price:Q", title="Avg Price ($/gal)", format=".3f"),
-        ],
-    )
-    .properties(height=340)
+heatmap = alt.Chart(season).mark_rect().encode(
+    x=alt.X("month_lbl:N", title="Month", sort=month_order),
+    y=alt.Y("year:O", title="Year"),
+    color=alt.Color("avg_price:Q", title="Avg Price ($/gal)"),
+    tooltip=[
+        alt.Tooltip("year:O", title="Year"),
+        alt.Tooltip("month_lbl:N", title="Month"),
+        alt.Tooltip("avg_price:Q", title="Avg Price ($/gal)", format=".3f"),
+    ],
+).properties(height=340)
+
+# Add data labels (3 decimals) on heatmap
+heatmap_labels = alt.Chart(season).mark_text(baseline='middle', align='center').encode(
+    x=alt.X("month_lbl:N", sort=month_order),
+    y=alt.Y("year:O"),
+    text=alt.Text("avg_price:Q", format=".3f")
 )
-st.altair_chart(heatmap, use_container_width=True)
+
+st.altair_chart(heatmap + heatmap_labels, use_container_width=True)
 
 # ---- Seasonality narrative ----
 monthly_avg = (
     df_trend.assign(month=df_trend["date"].dt.strftime("%b"))
     .groupby("month", as_index=False)["gasoline_price"].mean()
 )
-# set order for reliable idx
 monthly_avg["order"] = monthly_avg["month"].apply(lambda m: month_order.index(m))
 monthly_avg = monthly_avg.sort_values("order")
 hi = monthly_avg.iloc[monthly_avg["gasoline_price"].idxmax()]
@@ -294,35 +295,38 @@ yearly = (
     })
 )
 
-yearly_long = yearly.melt(
-    id_vars=["year"],
-    var_name="series",
-    value_name="avg_price"
+yearly_long = yearly.melt(id_vars=["year"], var_name="series", value_name="avg_price")
+
+year_bars = alt.Chart(yearly_long).mark_bar().encode(
+    x=alt.X("year:O", title="Year"),
+    y=alt.Y("avg_price:Q", title="Average Price ($/gal)"),
+    color=alt.Color("series:N", title=None),  # remove legend title
+    tooltip=[
+        alt.Tooltip("year:O", title="Year"),
+        alt.Tooltip("series:N", title=""),
+        alt.Tooltip("avg_price:Q", title="Avg Price ($/gal)", format=".3f"),
+    ],
+).properties(height=360)
+
+# Add data labels (3 decimals) above bars
+year_labels = alt.Chart(yearly_long).mark_text(
+    dy=-6  # nudge up
+).encode(
+    x=alt.X("year:O"),
+    y=alt.Y("avg_price:Q"),
+    detail="series:N",
+    color=alt.value("black"),
+    text=alt.Text("avg_price:Q", format=".3f")
 )
 
-year_bar = (
-    alt.Chart(yearly_long)
-    .mark_bar()
-    .encode(
-        x=alt.X("year:O", title="Year"),
-        y=alt.Y("avg_price:Q", title="Average Price ($/gal)"),
-        color=alt.Color("series:N", title="Series"),
-        tooltip=[
-            alt.Tooltip("year:O", title="Year"),
-            alt.Tooltip("series:N", title="Series"),
-            alt.Tooltip("avg_price:Q", title="Avg Price ($/gal)", format=".3f"),
-        ],
-    )
-    .properties(height=360)
-)
-st.altair_chart(year_bar, use_container_width=True)
+st.altair_chart(year_bars + year_labels, use_container_width=True)
 
 # ---- Yearly narrative ----
 hou_year_max = yearly.loc[yearly["Houston"].idxmax()]
 st.markdown(
     f"""
 **Macro view by year:**  
-- The highest annual average for Houston in this period was **{hou_year_max['year']}** at **${hou_year_max['Houston']:.2f}/gal**.  
+- The highest annual average for Houston in this period was **{int(hou_year_max['year'])}** at **${hou_year_max['Houston']:.2f}/gal**.  
 - Houston generally sits **below** the U.S. annual average and close to the Texas average.  
 - Yearly aggregates smooth short-term spikes and are useful for budgeting and long-range planning.
 """
@@ -345,14 +349,14 @@ mom_yoy_long = (
 
 mom_yoy_chart = (
     alt.Chart(mom_yoy_long)
-    .mark_line()
+    .mark_line(point=True)  # add markers
     .encode(
         x=alt.X("date:T", title="Monthly Date", axis=alt.Axis(format="%Y-%m", labelAngle=-30)),
         y=alt.Y("pct:Q", title="Percent Change", axis=alt.Axis(format="%")),
-        color=alt.Color("metric:N", title="Metric"),
+        color=alt.Color("metric:N", title=None),  # remove legend title
         tooltip=[
             alt.Tooltip("date:T", title="Date", format="%Y-%m"),
-            alt.Tooltip("metric:N", title="Metric"),
+            alt.Tooltip("metric:N", title=""),
             alt.Tooltip("pct:Q", title="Change", format=".1%")
         ],
     )
@@ -361,7 +365,6 @@ mom_yoy_chart = (
 st.altair_chart(mom_yoy_chart, use_container_width=True)
 
 # ---- Volatility & change narrative ----
-# Largest up/down MoM and YoY moves for Houston
 mom_abs = chg.dropna(subset=["mom_pct"]).copy()
 yoy_abs = chg.dropna(subset=["yoy_pct"]).copy()
 mom_up = mom_abs.loc[mom_abs["mom_pct"].idxmax()]
