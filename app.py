@@ -1,20 +1,29 @@
+# app.py
 import streamlit as st
 import pandas as pd
 import altair as alt
 
 st.set_page_config(page_title="Fuel Price Dashboard", layout="wide")
 
-# --- Load CSV ---
+# =======================
+# LOAD DATA
+# =======================
 df = pd.read_csv("prices.csv", parse_dates=["date"])
 
-# --- Sort newest first & grab latest row for KPIs ---
-df = df.sort_values("date", ascending=False).reset_index(drop=True)
-latest = df.iloc[0]
+# Sort both ways for convenience
+df_desc = df.sort_values("date", ascending=False).reset_index(drop=True)
+df_trend = df.sort_values("date", ascending=True).reset_index(drop=True)
+
+# Latest row for KPIs
+latest = df_desc.iloc[0]
 latest_date = latest["date"].strftime("%B %Y")  # e.g., "August 2025"
 
 # =======================
 # KPI ROW 1: Latest Prices
 # =======================
+st.title("⛽ Fuel Price Dashboard — Houston vs Texas & U.S. (2020–2025)")
+st.caption("Monthly regular gasoline prices ($/gal). Benchmarks: Texas statewide & U.S. national averages.")
+
 c1, c2, c3 = st.columns(3)
 
 c1.metric("📍 Latest Houston Price ($/gal)", f"${latest['gasoline_price']:.3f}")
@@ -48,15 +57,12 @@ st.markdown("---")
 # =======================
 st.subheader("Monthly Gasoline Price Trends (2020 - 2025)")
 
-# Prepare long (UNION ALL equivalent)
-df_trend = df.sort_values("date", ascending=True).copy()
-df_long = (
-    df_trend.melt(
-        id_vars=["date"],
-        value_vars=["gasoline_price", "texas_avg", "national_avg"],
-        var_name="series",
-        value_name="price"
-    )
+# Long form (UNION ALL equivalent)
+df_long = df_trend.melt(
+    id_vars=["date"],
+    value_vars=["gasoline_price", "texas_avg", "national_avg"],
+    var_name="series",
+    value_name="price"
 )
 name_map = {
     "gasoline_price": "Houston",
@@ -85,16 +91,14 @@ st.altair_chart(trend_chart, use_container_width=True)
 st.markdown("---")
 
 # =======================
-# NEW LINE CHART: Houston Price Spreads vs Texas & U.S.
+# LINE CHART: Houston Price Spreads vs Texas & U.S.
 # =======================
 st.subheader("Houston Price Spreads vs Texas & U.S.")
 
-# Compute spreads over time
 df_spread = df_trend.copy()
 df_spread["Houston - Texas"] = df_spread["gasoline_price"] - df_spread["texas_avg"]
 df_spread["Houston - U.S."] = df_spread["gasoline_price"] - df_spread["national_avg"]
 
-# Long form for two-line chart
 spread_long = df_spread.melt(
     id_vars=["date"],
     value_vars=["Houston - Texas", "Houston - U.S."],
@@ -118,93 +122,42 @@ spread_chart = (
     .properties(height=320)
 )
 st.altair_chart(spread_chart, use_container_width=True)
-import streamlit as st
-import pandas as pd
-import altair as alt
-
-st.set_page_config(page_title="Fuel Price Dashboard", layout="wide")
-
-# --- Load CSV ---
-df = pd.read_csv("prices.csv", parse_dates=["date"])
-
-# --- Sort newest first & grab latest row for KPIs ---
-df = df.sort_values("date", ascending=False).reset_index(drop=True)
-latest = df.iloc[0]
-latest_date = latest["date"].strftime("%B %Y")  # e.g., "August 2025"
-
-# =======================
-# KPI ROW 1: Latest Prices
-# =======================
-c1, c2, c3 = st.columns(3)
-
-c1.metric("📍 Latest Houston Price ($/gal)", f"${latest['gasoline_price']:.3f}")
-c1.caption(f"As of {latest_date}")
-
-c2.metric("📊 Latest Texas Avg ($/gal)", f"${latest['texas_avg']:.3f}")
-c2.caption(f"As of {latest_date}")
-
-c3.metric("🇺🇸 Latest U.S. Avg ($/gal)", f"${latest['national_avg']:.3f}")
-c3.caption(f"As of {latest_date}")
 
 st.markdown("---")
 
 # =======================
-# KPI ROW 2: Spreads
+# HEATMAP: Seasonality — Average Houston Price by Month & Year
 # =======================
-spread_tx = latest["gasoline_price"] - latest["texas_avg"]
-spread_us = latest["gasoline_price"] - latest["national_avg"]
+st.subheader("Seasonality — Average Houston Price by Month and Year")
 
-s1, s2 = st.columns(2)
-
-s1.metric("➖ Spread: Houston − Texas ($/gal)", f"${spread_tx:+.3f}")
-s1.caption(f"As of {latest_date}")
-
-s2.metric("➖ Spread: Houston − U.S. ($/gal)", f"${spread_us:+.3f}")
-s2.caption(f"As of {latest_date}")
-
-st.markdown("---")
-
-# =======================
-# LINE CHART: Monthly Trends (2020–2025)
-# =======================
-st.subheader("Monthly Gasoline Price Trends (2020 - 2025)")
-
-# Prepare long (UNION ALL equivalent)
-df_long = (
-    df.sort_values("date", ascending=True)
-      .melt(
-          id_vars=["date"],
-          value_vars=["gasoline_price", "texas_avg", "national_avg"],
-          var_name="series",
-          value_name="price"
-      )
+season = (
+    df_trend.assign(
+        year=df_trend["date"].dt.year,
+        month_num=df_trend["date"].dt.month,
+        month_lbl=df_trend["date"].dt.strftime("%b")
+    )
+    .groupby(["year", "month_num", "month_lbl"], as_index=False)["gasoline_price"]
+    .mean()
+    .rename(columns={"gasoline_price": "avg_price"})
 )
 
-# Map series names to match your SQL labels
-name_map = {
-    "gasoline_price": "Houston",
-    "texas_avg": "Texas Statewide",
-    "national_avg": "U.S. National",
-}
-df_long["series"] = df_long["series"].map(name_map)
+month_order = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+season["month_lbl"] = pd.Categorical(season["month_lbl"], categories=month_order, ordered=True)
+season = season.sort_values(["year", "month_num"])
 
-# Build the Altair line chart
-trend_chart = (
-    alt.Chart(df_long)
-    .mark_line()
+heatmap = (
+    alt.Chart(season)
+    .mark_rect()
     .encode(
-        x=alt.X("date:T",
-                title="Monthly Date",
-                axis=alt.Axis(format="%Y-%m", labelAngle=-30)),  # shows 2020-01 style
-        y=alt.Y("price:Q", title="Gasoline Price (USD per Gallon)"),
-        color=alt.Color("series:N", title="Series"),
+        x=alt.X("month_lbl:N", title="Month", sort=month_order),
+        y=alt.Y("year:O", title="Year"),
+        color=alt.Color("avg_price:Q", title="Avg Price ($/gal)"),
         tooltip=[
-            alt.Tooltip("date:T", title="Date", format="%Y-%m"),
-            alt.Tooltip("series:N", title="Series"),
-            alt.Tooltip("price:Q", title="Price ($/gal)", format=".3f"),
+            alt.Tooltip("year:O", title="Year"),
+            alt.Tooltip("month_lbl:N", title="Month"),
+            alt.Tooltip("avg_price:Q", title="Avg Price ($/gal)", format=".3f"),
         ],
     )
-    .properties(height=380)
+    .properties(height=340)
 )
-
-st.altair_chart(trend_chart, use_container_width=True)
+st.altair_chart(heatmap, use_container_width=True)
