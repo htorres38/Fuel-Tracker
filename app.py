@@ -61,17 +61,19 @@ hou_yoy = pct_change(hou_now, float(prev_y["gasoline_price"]) if prev_y is not N
 
 st.markdown(
     f"""
-    **What the latest month says:**  
-    - Houston is **{abs(diff_tx):.3f} $/gal {
-        'below' if diff_tx < 0 else 'above' if diff_tx > 0 else 'at'
-    }** the Texas average and **{abs(diff_us):.3f} $/gal {
-        'below' if diff_us < 0 else 'above' if diff_us > 0 else 'at'
-    }** the U.S. average.  
-    - Month-over-month change for Houston: **{hou_mom * 100:+.1f}%**; year-over-year: **{hou_yoy * 100:+.1f}%** 
-      (positive = increase).  
-    *Use these to quickly gauge relative pricing and short/long-term direction.*
-    """
+**What the latest month says:**  
+
+- Houston is **{abs(diff_tx):.3f} $/gal {'below' if diff_tx < 0 else 'above' if diff_tx > 0 else 'at'}** the Texas average  
+  and **{abs(diff_us):.3f} $/gal {'below' if diff_us < 0 else 'above' if diff_us > 0 else 'at'}** the U.S. average.  
+
+- Month-over-month change for Houston: **{hou_mom*100:+.1f}%**;  
+  year-over-year: **{hou_yoy*100:+.1f}%** (positive = increase).  
+
+*Use these to quickly gauge relative pricing and short/long-term direction.*
+""",
+    unsafe_allow_html=False
 )
+
 
 # =======================
 # KPI ROW 2: Spreads (instant view)
