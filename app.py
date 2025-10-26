@@ -209,8 +209,8 @@ st.markdown(
     f"""
 **How to read spreads:**  
 - Positive spread = **Houston priced above** the benchmark; negative = **below**.  
-- Latest spreads: **Houston–Texas: {spread_tx_latest:+.3f} \\$/gal**, **Houston–U.S.: {spread_us_latest:+.3f} \\$/gal**.  
-- Recent trend (last ~3 months): spreads vs Texas **{'widening' if slope_tx > 0 else 'narrowing' if slope_tx < 0 else 'flat'}**, vs U.S. **{'widening' if slope_us > 0 else 'narrowing' if slope_us < 0 else 'flat'}**.
+- Latest spreads: **Houston–Texas: {spread_tx_latest:+.3f} $/gal**, **Houston–U.S.: {spread_us_latest:+.3f} $/gal**.  
+- Recent trend (last ~3 months): spreads vs Texas **{'widening' if slope_tx>0 else 'narrowing' if slope_tx<0 else 'flat'}**, vs U.S. **{'widening' if slope_us>0 else 'narrowing' if slope_us<0 else 'flat'}**.
 """
 )
 
