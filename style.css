@@ -1,80 +1,118 @@
-/* Base font & spacing */
-:root {
-  --card-bg: #ffffff;
-  --card-border: #e9ecef;
-  --shadow: 0 8px 24px rgba(0,0,0,0.08);
-  --shadow-hover: 0 10px 28px rgba(0,0,0,0.12);
-  --radius: 16px;
+/* Nintendo × Over the Garden Wall — warm, cozy, autumnal */
+
+:root{
+  --bg: #faf6ef;           /* parchment */
+  --ink: #1f2937;          /* slate-800 */
+  --subink: #475569;       /* slate-600 */
+  --card: #ffffff;
+  --stroke: #e7dccd;       /* parchment edge */
+  --shadow: 0 6px 20px rgba(84, 57, 40, 0.10);
+  --shadow-h: 0 8px 26px rgba(84, 57, 40, 0.16);
+  --radius: 14px;
+  --accent: #9A3412;       /* rust */
+  --accent-2: #065F46;     /* moss */
+  --accent-3: #B45309;     /* ochre */
 }
 
-html, body, [data-testid="stAppViewContainer"] {
-  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+html, body, [data-testid="stAppViewContainer"]{
+  background: var(--bg);
+  color: var(--ink);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
 }
 
-/* Tighten layout a touch */
-.block-container {
-  padding-top: 1.5rem;
-  padding-bottom: 3rem;
-  max-width: 1300px;
+.block-container{
+  padding-top: 1.2rem;
+  padding-bottom: 2.2rem;
+  max-width: 1200px;
 }
 
-/* Card feel for metrics */
-[data-testid="stMetric"] {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
+/* Header */
+.title-wrap h1{
+  margin: 0 0 .25rem 0;
+  font-weight: 800;
+  letter-spacing: .2px;
+}
+.title-wrap .subtitle{
+  margin: 0 0 1rem 0;
+  color: var(--subink);
+}
+
+/* Filters */
+label{
+  font-weight: 600;
+  color: var(--subink);
+}
+
+/* Metrics -> subtle cards */
+[data-testid="stMetric"]{
+  background: var(--card);
+  border: 1px solid var(--stroke);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  padding: 16px 18px;
-  transition: transform .15s ease, box-shadow .15s ease;
+  padding: 14px 16px;
+  transition: transform .12s ease, box-shadow .12s ease;
 }
-[data-testid="stMetric"]:hover {
+[data-testid="stMetric"]:hover{
   transform: translateY(-2px);
-  box-shadow: var(--shadow-hover);
+  box-shadow: var(--shadow-h);
 }
-
-/* Metric title + value tweaks */
-[data-testid="stMetric"] [data-testid="stMetricLabel"] {
-  font-weight: 600;
-  color: #334155; /* slate-700 */
+[data-testid="stMetric"] [data-testid="stMetricLabel"]{
+  color: var(--subink);
+  font-weight: 700;
 }
-[data-testid="stMetric"] [data-testid="stMetricValue"] {
+[data-testid="stMetric"] [data-testid="stMetricValue"]{
   font-variant-numeric: tabular-nums;
 }
 
-/* Section divider spacing */
-hr {
-  margin: 1.2rem 0 1.6rem;
-}
-
-/* Subheaders */
-h2, .stMarkdown h2, .stMarkdown h3, .stMarkdown h4 {
-  letter-spacing: 0.2px;
-}
-
-/* Download button full width look */
-button[kind="primary"] {
+/* Narrative note */
+.note{
+  background: #fff;
+  border: 1px dashed var(--stroke);
   border-radius: 12px;
+  padding: 10px 12px;
+  color: var(--ink);
   box-shadow: var(--shadow);
 }
 
-/* Altair chart container subtle rounding */
-.css-1dp5vir e1f1d6gn0, .stPlotlyChart, .stVegaLiteChart {
+/* Chart containers */
+.stVegaLiteChart, .stPlotlyChart{
   border-radius: 14px !important;
   overflow: hidden;
+  background: #fff;
+  border: 1px solid var(--stroke);
+  box-shadow: var(--shadow);
 }
 
-/* Filter row labels smaller / tidy */
-label[for="Year"], label[for="Month"] {
-  font-weight: 600;
+/* Subheaders */
+h2{
+  margin-top: .5rem;
+  margin-bottom: .25rem;
+  letter-spacing: .2px;
 }
 
-/* Tooltip legibility (browser tooltip) */
-.vega-tooltip {
-  border-radius: 8px !important;
+/* Download at end — tiny, subtle */
+.dl-wrap{
+  display: flex;
+  justify-content: flex-end;
+  margin-top: .6rem;
+}
+.dl-wrap button{
+  background: #fff !important;
+  color: var(--ink) !important;
+  border: 1px solid var(--stroke) !important;
+  border-radius: 10px !important;
+  padding: 6px 10px !important;
+  box-shadow: var(--shadow);
+}
+.dl-wrap button:hover{
+  box-shadow: var(--shadow-h);
+}
+
+/* Tooltips (Altair) */
+.vega-tooltip{
+  border-radius: 10px !important;
   font-size: 12.5px !important;
 }
 
-/* Paragraph spacing in narratives */
-.stMarkdown p {
-  margin-bottom: 0.4rem;
-}
+/* Tighten p spacing */
+.stMarkdown p{ margin-bottom: .35rem; }
