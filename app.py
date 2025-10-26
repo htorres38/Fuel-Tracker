@@ -263,8 +263,9 @@ monthly_avg = (
 )
 monthly_avg["order"] = monthly_avg["month"].apply(lambda m: month_order.index(m))
 monthly_avg = monthly_avg.sort_values("order")
-hi = monthly_avg.iloc[monthly_avg["gasoline_price"].idxmax()]
-lo = monthly_avg.iloc[monthly_avg["gasoline_price"].idxmin()]
+hi = monthly_avg.loc[monthly_avg["gasoline_price"].idxmax()]
+lo = monthly_avg.loc[monthly_avg["gasoline_price"].idxmin()]
+
 
 st.markdown(
     f"""
