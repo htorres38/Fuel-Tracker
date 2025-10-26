@@ -25,6 +25,9 @@ def pct_change(new, old):
         return None
     return (new - old) / old
 
+def fmt_pct(x):
+    return f"{x*100:+.1f}%" if x is not None and not pd.isna(x) else "n/a"
+
 # =======================
 # HEADER
 # =======================
@@ -63,7 +66,7 @@ st.markdown(
     f"""
 **What the latest month says:**  
 - Houston is **{abs(diff_tx):.3f} \\$/gal {'below' if diff_tx < 0 else 'above' if diff_tx > 0 else 'at'}** the Texas average and **{abs(diff_us):.3f} \\$/gal {'below' if diff_us < 0 else 'above' if diff_us > 0 else 'at'}** the U.S. average.  
-- Month-over-month change for Houston: **{hou_mom*100:+.1f}%**; year-over-year: **{hou_yoy*100:+.1f}%** (positive = increase).  
+- Month-over-month change for Houston: **{fmt_pct(hou_mom)}**; year-over-year: **{fmt_pct(hou_yoy)}** (positive = increase).  
 *Use these to quickly gauge relative pricing and short/long-term direction.*
 """
 )
@@ -152,8 +155,8 @@ min_date = pd.to_datetime(min_row["date"]).strftime("%B %Y")
 st.markdown(
     f"""
 **How prices evolved:**  
-- Local peak occurred in **{peak_date}** at **${peak_val:.3f}/gal**, with the sharpest run-up centered in **2022**.  
-- Local trough since 2020 was **{min_date}** at **${min_val:.3f}/gal**.  
+- Local peak occurred in **{peak_date}** at **\\${peak_val:.3f}/gal**, with the sharpest run-up centered in **2022**.  
+- Local trough since 2020 was **{min_date}** at **\\${min_val:.3f}/gal**.  
 - Houston generally tracks state and national moves, but the gap to U.S. widens during high-price periods (see spreads below).
 """
 )
@@ -167,7 +170,7 @@ st.subheader("Houston Price Spreads vs Texas & U.S.")
 
 df_spread = df_trend.copy()
 df_spread["Houston - Texas"] = df_spread["gasoline_price"] - df_spread["texas_avg"]
-df_spread["Houston - U.S."] = df_trend["gasoline_price"] - df_trend["national_avg"]
+df_spread["Houston - U.S."]   = df_trend["gasoline_price"] - df_trend["national_avg"]
 
 spread_long = df_spread.melt(
     id_vars=["date"],
@@ -205,12 +208,17 @@ def slope_last_n(series, n=3):
 slope_tx = slope_last_n(df_spread["Houston - Texas"], 3)
 slope_us = slope_last_n(df_spread["Houston - U.S."], 3)
 
+def trend_word(s):
+    if pd.isna(s):
+        return "n/a"
+    return "widening" if s > 0 else "narrowing" if s < 0 else "flat"
+
 st.markdown(
     f"""
 **How to read spreads:**  
 - Positive spread = **Houston priced above** the benchmark; negative = **below**.  
 - Latest spreads: **Houston–Texas: {spread_tx_latest:+.3f} \\$/gal**, **Houston–U.S.: {spread_us_latest:+.3f} \\$/gal**.  
-- Recent trend (last ~3 months): spreads vs Texas **{'widening' if slope_tx > 0 else 'narrowing' if slope_tx < 0 else 'flat'}**, vs U.S. **{'widening' if slope_us > 0 else 'narrowing' if slope_us < 0 else 'flat'}**.
+- Recent trend (last ~3 months): spreads vs Texas **{trend_word(slope_tx)}**, vs U.S. **{trend_word(slope_us)}**.
 """
 )
 
@@ -266,12 +274,11 @@ monthly_avg = monthly_avg.sort_values("order")
 hi = monthly_avg.loc[monthly_avg["gasoline_price"].idxmax()]
 lo = monthly_avg.loc[monthly_avg["gasoline_price"].idxmin()]
 
-
 st.markdown(
     f"""
 **Recurring patterns:**  
-- On average since 2020, the **highest months** for Houston are around **{hi['month']}** (~${hi['gasoline_price']:.2f}/gal).  
-- The **lowest months** tend to be around **{lo['month']}** (~${lo['gasoline_price']:.2f}/gal).  
+- On average since 2020, the **highest months** for Houston are around **{hi['month']}** (~\\${hi['gasoline_price']:.2f}/gal).  
+- The **lowest months** tend to be around **{lo['month']}** (~\\${lo['gasoline_price']:.2f}/gal).  
 - Seasonality helps set expectations and compare current prices against typical monthly levels.
 """
 )
@@ -325,7 +332,7 @@ hou_year_max = yearly.loc[yearly["Houston"].idxmax()]
 st.markdown(
     f"""
 **Macro view by year:**  
-- The highest annual average for Houston in this period was **{int(hou_year_max['year'])}** at **${hou_year_max['Houston']:.2f}/gal**.  
+- The highest annual average for Houston in this period was **{int(hou_year_max['year'])}** at **\\${hou_year_max['Houston']:.2f}/gal**.  
 - Houston generally sits **below** the U.S. annual average and close to the Texas average.  
 - Yearly aggregates smooth short-term spikes and are useful for budgeting and long-range planning.
 """
