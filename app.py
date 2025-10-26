@@ -3,7 +3,6 @@ import streamlit as st
 import pandas as pd
 import altair as alt
 import numpy as np
-from io import StringIO
 
 st.set_page_config(page_title="Fuel Price Dashboard", layout="wide")
 
@@ -12,34 +11,9 @@ st.set_page_config(page_title="Fuel Price Dashboard", layout="wide")
 # =======================
 df = pd.read_csv("prices.csv", parse_dates=["date"])
 
-# =======================
-# FILTERS (no defaults; empty = all)
-# =======================
-years_all = sorted(df["date"].dt.year.unique().tolist())
-months_all = list(range(1, 13))
-month_labels = {m: pd.Timestamp(2000, m, 1).strftime("%b") for m in months_all}
-
-f1, f2, f3 = st.columns([1, 2, 2], gap="small")
-with f1:
-    st.markdown("#### Filters")
-with f2:
-    sel_years = st.multiselect("Year", options=years_all, default=[])
-with f3:
-    sel_months_lbl = st.multiselect("Month", options=[month_labels[m] for m in months_all], default=[])
-    sel_months = [m for m, lbl in month_labels.items() if lbl in sel_months_lbl]
-
-# Empty selections => all
-yrs = sel_years if sel_years else years_all
-mos = sel_months if sel_months else months_all
-
-df_filt = df[df["date"].dt.year.isin(yrs) & df["date"].dt.month.isin(mos)].copy()
-if df_filt.empty:
-    st.warning("No data for the selected filters.")
-    st.stop()
-
-# Sort both ways for convenience (FILTERED)
-df_desc = df_filt.sort_values("date", ascending=False).reset_index(drop=True)
-df_trend = df_filt.sort_values("date", ascending=True).reset_index(drop=True)
+# Sort both ways for convenience
+df_desc = df.sort_values("date", ascending=False).reset_index(drop=True)
+df_trend = df.sort_values("date", ascending=True).reset_index(drop=True)
 
 # Latest row for KPIs
 latest = df_desc.iloc[0]
@@ -292,6 +266,7 @@ monthly_avg = monthly_avg.sort_values("order")
 hi = monthly_avg.loc[monthly_avg["gasoline_price"].idxmax()]
 lo = monthly_avg.loc[monthly_avg["gasoline_price"].idxmin()]
 
+
 st.markdown(
     f"""
 **Recurring patterns:**  
@@ -405,18 +380,3 @@ st.markdown(
 *These help identify periods of unusual volatility that may warrant deeper investigation (supply shocks, policy, refinery outages, etc.).*
 """
 )
-
-# =======================
-# SUBTLE DOWNLOAD BUTTON (end, right-aligned, small footprint)
-# =======================
-csv_buf = StringIO()
-df_filt.sort_values("date").to_csv(csv_buf, index=False)
-r1, r2 = st.columns([6, 1])
-with r2:
-    st.download_button(
-        "Download filtered CSV",
-        data=csv_buf.getvalue(),
-        file_name="prices_filtered.csv",
-        mime="text/csv",
-        use_container_width=False,
-    )
