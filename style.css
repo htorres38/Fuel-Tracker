@@ -1,0 +1,112 @@
+/* style.css — sleek, readable, and a little punchy */
+
+:root {
+  --bg: #0f172a;           /* slate-900 */
+  --card: #111827;         /* gray-900 */
+  --ink: #e5e7eb;          /* gray-200 */
+  --muted: #9ca3af;        /* gray-400 */
+  --accent: #22d3ee;       /* cyan-400 */
+  --accent-2: #a78bfa;     /* violet-400 */
+}
+
+html, body, [class*="css"] {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
+}
+
+/* Page background & base text */
+body {
+  color: var(--ink);
+  background: radial-gradient(1200px 800px at 20% -10%, #1f2937 0%, var(--bg) 45%);
+}
+
+/* Main container width & padding */
+.block-container {
+  max-width: 1300px;
+  padding-top: 1rem;
+}
+
+/* Titles */
+h1, h2, h3 {
+  color: var(--ink) !important;
+  letter-spacing: 0.3px;
+}
+h1 { font-size: 2rem; }
+h2 { font-size: 1.35rem; margin-top: .75rem; }
+
+/* Captions */
+.css-10trblm, .css-145kmo2, .stCaption { /* version-tolerant selectors */
+  color: var(--muted) !important;
+}
+
+/* Horizontal rules */
+hr {
+  border: none;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #374151, transparent);
+  margin: 1rem 0 0.8rem;
+}
+
+/* Metrics look like cards */
+[data-testid="stMetric"] {
+  background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+  border: 1px solid #1f2937;
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+}
+[data-testid="stMetric"] label {
+  color: var(--muted) !important;
+  font-weight: 500 !important;
+}
+[data-testid="stMetricValue"] {
+  color: var(--ink) !important;
+}
+
+/* Sidebar styling */
+section[data-testid="stSidebar"] {
+  background: linear-gradient(180deg, #0b1220, #0f172a);
+  border-right: 1px solid #1f2937;
+}
+section[data-testid="stSidebar"] * {
+  color: var(--ink) !important;
+}
+section[data-testid="stSidebar"] .st-emotion-cache-1vbkxwb {
+  color: var(--muted) !important; /* help labels read better */
+}
+
+/* Buttons, selects, inputs */
+button, .stDownloadButton button {
+  background: linear-gradient(90deg, var(--accent), var(--accent-2)) !important;
+  color: #0b0f1a !important;
+  border: 0 !important;
+  border-radius: 10px !important;
+  font-weight: 600 !important;
+}
+.stDownloadButton button:hover {
+  filter: brightness(1.05);
+}
+
+/* Altair chart container: subtle card feel */
+.st-al {
+  background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+  border: 1px solid #1f2937;
+  border-radius: 14px;
+  padding: 8px 10px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+/* Markdown code / emphasis tweaks */
+code, pre {
+  background: #0b1220 !important;
+  border: 1px solid #1f2937 !important;
+  color: #e5e7eb !important;
+}
+
+/* Links */
+a, a:visited {
+  color: var(--accent);
+}
+a:hover {
+  color: var(--accent-2);
+  text-decoration: none;
+}
