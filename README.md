@@ -3,6 +3,8 @@
 A Streamlit application that visualizes monthly **Houston gasoline prices** compared to the **Texas** and **U.S.** averages.  
 The dashboard highlights the most recent values, price differences (spreads), seasonal patterns, yearly averages, and both month-over-month (MoM) and year-over-year (YoY) changes.
 
+View the live app here: **[https://houston-fuel-tracker-dashboard.streamlit.app](https://houston-fuel-tracker-dashboard.streamlit.app)**
+
 ---
 
 ## Overview
