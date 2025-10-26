@@ -1,55 +1,80 @@
-/* style.css — simple, readable, dashboard-like */
-
-html, body, [class*="css"] {
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+/* Base font & spacing */
+:root {
+  --card-bg: #ffffff;
+  --card-border: #e9ecef;
+  --shadow: 0 8px 24px rgba(0,0,0,0.08);
+  --shadow-hover: 0 10px 28px rgba(0,0,0,0.12);
+  --radius: 16px;
 }
 
-/* Keep it light and clean */
+html, body, [data-testid="stAppViewContainer"] {
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+}
+
+/* Tighten layout a touch */
 .block-container {
-  max-width: 1200px;
+  padding-top: 1.5rem;
+  padding-bottom: 3rem;
+  max-width: 1300px;
 }
 
-h1, h2, h3 {
+/* Card feel for metrics */
+[data-testid="stMetric"] {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px 18px;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+[data-testid="stMetric"]:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
+
+/* Metric title + value tweaks */
+[data-testid="stMetric"] [data-testid="stMetricLabel"] {
+  font-weight: 600;
+  color: #334155; /* slate-700 */
+}
+[data-testid="stMetric"] [data-testid="stMetricValue"] {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Section divider spacing */
+hr {
+  margin: 1.2rem 0 1.6rem;
+}
+
+/* Subheaders */
+h2, .stMarkdown h2, .stMarkdown h3, .stMarkdown h4 {
   letter-spacing: 0.2px;
 }
 
-hr {
-  border: none;
-  height: 1px;
-  background: #e5e7eb; /* light gray */
-  margin: 0.75rem 0 0.5rem;
+/* Download button full width look */
+button[kind="primary"] {
+  border-radius: 12px;
+  box-shadow: var(--shadow);
 }
 
-/* Subtle metric cards */
-[data-testid="stMetric"] {
-  background: #fafafa;
-  border: 1px solid #ececec;
-  border-radius: 10px;
-  padding: 12px 14px;
+/* Altair chart container subtle rounding */
+.css-1dp5vir e1f1d6gn0, .stPlotlyChart, .stVegaLiteChart {
+  border-radius: 14px !important;
+  overflow: hidden;
 }
 
-/* Sidebar: light card feel */
-section[data-testid="stSidebar"] {
-  background: #f9fafb;
-  border-right: 1px solid #eee;
+/* Filter row labels smaller / tidy */
+label[for="Year"], label[for="Month"] {
+  font-weight: 600;
 }
 
-/* Altair chart wrapper (Streamlit container) */
-.st-al {
-  background: #ffffff;
-  border: 1px solid #f0f0f0;
-  border-radius: 10px;
-  padding: 8px 10px;
-}
-
-/* Buttons */
-button, .stDownloadButton button {
-  background: #2563eb !important; /* blue-600 */
-  color: #fff !important;
-  border: 0 !important;
+/* Tooltip legibility (browser tooltip) */
+.vega-tooltip {
   border-radius: 8px !important;
-  font-weight: 600 !important;
+  font-size: 12.5px !important;
 }
-button:hover, .stDownloadButton button:hover {
-  filter: brightness(1.05);
+
+/* Paragraph spacing in narratives */
+.stMarkdown p {
+  margin-bottom: 0.4rem;
 }
