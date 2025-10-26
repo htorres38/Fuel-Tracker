@@ -227,81 +227,33 @@ st.markdown("---")
 # =======================
 # HEATMAP: Seasonality — Average Houston Price by Month & Year
 # =======================
-st.subheader("Seasonality — Average Houston Price by Month and Year")
-
-season = (
-    df_trend.assign(
-        year=df_trend["date"].dt.year,
-        month_num=df_trend["date"].dt.month,
-        month_lbl=df_trend["date"].dt.strftime("%b")
-    )
-    .groupby(["year", "month_num", "month_lbl"], as_index=False)["gasoline_price"]
-    .mean()
-    .rename(columns={"gasoline_price": "avg_price"})
-)
-
-month_order = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
-season["month_lbl"] = pd.Categorical(season["month_lbl"], categories=month_order, ordered=True)
-season = season.sort_values(["year", "month_num"])
-
-heatmap = alt.Chart(season).mark_rect().encode(
-    x=alt.X("month_lbl:N", title="Month", sort=month_order),
-    y=alt.Y("year:O", title="Year"),
-    color=alt.Color("avg_price:Q", title="Avg Price ($/gal)"),
-    tooltip=[
-        alt.Tooltip("year:O", title="Year"),
-        alt.Tooltip("month_lbl:N", title="Month"),
-        alt.Tooltip("avg_price:Q", title="Avg Price ($/gal)", format=".3f"),
-    ],
-).properties(height=340)
-
-# Add data labels (3 decimals) on heatmap
-heatmap_labels = alt.Chart(season).mark_text(baseline='middle', align='center').encode(
-    x=alt.X("month_lbl:N", sort=month_order),
-    y=alt.Y("year:O"),
-    text=alt.Text("avg_price:Q", format=".3f")
-)
-
-st.altair_chart(heatmap + heatmap_labels, use_container_width=True)
-
-# ---- Seasonality narrative ----
-monthly_avg = (
-    df_trend.assign(month=df_trend["date"].dt.strftime("%b"))
-    .groupby("month", as_index=False)["gasoline_price"].mean()
-)
-monthly_avg["order"] = monthly_avg["month"].apply(lambda m: month_order.index(m))
-monthly_avg = monthly_avg.sort_values("order")
-hi = monthly_avg.loc[monthly_avg["gasoline_price"].idxmax()]
-lo = monthly_avg.loc[monthly_avg["gasoline_price"].idxmin()]
-
-st.markdown(
-    f"""
-**Recurring patterns:**  
-- On average since 2020, the **highest months** for Houston are around **{hi['month']}** (~\\${hi['gasoline_price']:.2f}/gal).  
-- The **lowest months** tend to be around **{lo['month']}** (~\\${lo['gasoline_price']:.2f}/gal).  
-- Seasonality helps set expectations and compare current prices against typical monthly levels.
-"""
-)
-
-st.markdown("---")
-
 # =======================
 # BAR CHART: Yearly Average Prices (Houston vs Benchmarks)
 # =======================
 st.subheader("Yearly Average Prices (Houston vs Benchmarks)")
 
+# Aggregate by year and also keep a month count to detect partial years
 yearly = (
     df_trend.assign(year=df_trend["date"].dt.year)
-    .groupby("year", as_index=False)[["gasoline_price", "texas_avg", "national_avg"]]
-    .mean()
-    .rename(columns={
-        "gasoline_price": "Houston",
-        "texas_avg": "Texas Statewide",
-        "national_avg": "U.S. National"
-    })
+    .groupby("year", as_index=False)
+    .agg(
+        Houston=("gasoline_price", "mean"),
+        **{"Texas Statewide": ("texas_avg", "mean")},
+        **{"U.S. National": ("national_avg", "mean")},
+        n_months=("gasoline_price", "size")
+    )
 )
 
-yearly_long = yearly.melt(id_vars=["year"], var_name="series", value_name="avg_price")
+# Use complete years (12 months) when identifying the "highest annual average"
+yearly_complete = yearly[yearly["n_months"] == 12].copy()
+hou_year_max = yearly_complete.loc[yearly_complete["Houston"].idxmax()]
+
+yearly_long = yearly.melt(
+    id_vars=["year"],
+    value_vars=["Houston", "Texas Statewide", "U.S. National"],
+    var_name="series",
+    value_name="avg_price"
+)
 
 year_bars = alt.Chart(yearly_long).mark_bar().encode(
     x=alt.X("year:O", title="Year"),
@@ -315,9 +267,7 @@ year_bars = alt.Chart(yearly_long).mark_bar().encode(
 ).properties(height=360)
 
 # Add data labels (3 decimals) above bars
-year_labels = alt.Chart(yearly_long).mark_text(
-    dy=-6  # nudge up
-).encode(
+year_labels = alt.Chart(yearly_long).mark_text(dy=-6).encode(
     x=alt.X("year:O"),
     y=alt.Y("avg_price:Q"),
     detail="series:N",
@@ -327,12 +277,11 @@ year_labels = alt.Chart(yearly_long).mark_text(
 
 st.altair_chart(year_bars + year_labels, use_container_width=True)
 
-# ---- Yearly narrative ----
-hou_year_max = yearly.loc[yearly["Houston"].idxmax()]
+# ---- Yearly narrative (escape $ for Markdown)
 st.markdown(
     f"""
 **Macro view by year:**  
-- The highest annual average for Houston in this period was **{int(hou_year_max['year'])}** at **\\${hou_year_max['Houston']:.2f}/gal**.  
+- The highest annual average for Houston in this period (complete years only) was **{int(hou_year_max['year'])}** at **\\${hou_year_max['Houston']:.2f}/gal**.  
 - Houston generally sits **below** the U.S. annual average and close to the Texas average.  
 - Yearly aggregates smooth short-term spikes and are useful for budgeting and long-range planning.
 """
