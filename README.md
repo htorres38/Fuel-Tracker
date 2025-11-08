@@ -63,7 +63,10 @@ Core calculations include:
 - **Spreads:** Difference between Houston and each benchmark.
 
 ---
-
+### Data Source
+- All gasoline price data comes from the U.S. Energy Information Administration (EIA) monthly averages for regular gasoline.
+- The dataset includes Houston, Texas statewide, and U.S. national prices from January 2020 through August 2025.
+---
 ## Technical Details
 
 **Frameworks & Libraries**
